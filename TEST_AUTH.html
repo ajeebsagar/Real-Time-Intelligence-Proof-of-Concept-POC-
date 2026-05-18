@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Auth Test</title>
+</head>
+<body>
+    <h1>Authentication Test</h1>
+    
+    <h2>Register</h2>
+    <button onclick="testRegister()">Test Register</button>
+    <div id="registerResult"></div>
+    
+    <h2>Login</h2>
+    <button onclick="testLogin()">Test Login</button>
+    <div id="loginResult"></div>
+    
+    <script>
+        async function testRegister() {
+            try {
+                const response = await fetch('http://localhost:5000/api/auth/register', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        email: 'test2@example.com',
+                        password: 'password123',
+                        name: 'Test User 2'
+                    })
+                });
+                
+                const data = await response.json();
+                document.getElementById('registerResult').innerHTML = 
+                    '<pre>' + JSON.stringify(data, null, 2) + '</pre>';
+                    
+                if (data.success) {
+                    localStorage.setItem('token', data.data.token);
+                    alert('Registration successful! Token saved.');
+                }
+            } catch (error) {
+                document.getElementById('registerResult').innerHTML = 
+                    '<pre style="color: red;">' + error.message + '</pre>';
+            }
+        }
+        
+        async function testLogin() {
+            try {
+                const response = await fetch('http://localhost:5000/api/auth/login', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        email: 'test@example.com',
+                        password: 'password123'
+                    })
+                });
+                
+                const data = await response.json();
+                document.getElementById('loginResult').innerHTML = 
+                    '<pre>' + JSON.stringify(data, null, 2) + '</pre>';
+                    
+                if (data.success) {
+                    localStorage.setItem('token', data.data.token);
+                    alert('Login successful! Token saved.');
+                }
+            } catch (error) {
+                document.getElementById('loginResult').innerHTML = 
+                    '<pre style="color: red;">' + error.message + '</pre>';
+            }
+        }
+    </script>
+</body>
+</html>

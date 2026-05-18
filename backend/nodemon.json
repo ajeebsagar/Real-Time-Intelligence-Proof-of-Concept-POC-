@@ -1,0 +1,7 @@
+{
+  "watch": ["src"],
+  "ext": "ts",
+  "ignore": ["src/**/*.spec.ts", "node_modules", "dist", "logs", "uploads", "vectorstore"],
+  "exec": "ts-node src/app.ts",
+  "delay": "2000"
+}

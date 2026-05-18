@@ -1,0 +1,73 @@
+services:
+  postgres:
+    image: postgres:15-alpine
+    container_name: realtime-intelligence-db
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: realtime_intelligence
+    ports:
+      # Mapped to 5433 on host to avoid colliding with a local Postgres on 5432.
+      - "5433:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  whisper:
+    image: onerahmet/openai-whisper-asr-webservice:latest
+    container_name: realtime-intelligence-whisper
+    environment:
+      ASR_MODEL: ${WHISPER_MODEL:-base}
+      ASR_ENGINE: openai_whisper
+    ports:
+      - "9000:9000"
+    volumes:
+      - whisper_cache:/root/.cache
+
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: realtime-intelligence-backend
+    environment:
+      NODE_ENV: production
+      PORT: 5000
+      DATABASE_URL: postgresql://postgres:postgres@postgres:5432/realtime_intelligence?schema=public
+      OPENROUTER_API_KEY: ${OPENROUTER_API_KEY}
+      JWT_SECRET: ${JWT_SECRET:?JWT_SECRET is required}
+      FRONTEND_URL: http://localhost:3000
+      WHISPER_API_URL: http://whisper:9000
+      WHISPER_PROVIDER: docker
+      WHISPER_MODEL: ${WHISPER_MODEL:-base}
+    ports:
+      - "5000:5000"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      whisper:
+        condition: service_started
+    volumes:
+      - ./backend/uploads:/app/uploads
+      - ./backend/logs:/app/logs
+      - ./backend/vectorstore:/app/vectorstore
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: realtime-intelligence-frontend
+    environment:
+      NEXT_PUBLIC_API_URL: http://localhost:5000
+      NEXT_PUBLIC_WS_URL: http://localhost:5000
+    ports:
+      - "3000:3000"
+    depends_on:
+      - backend
+
+volumes:
+  postgres_data:
+  whisper_cache:
