@@ -11,7 +11,9 @@ services:
     runtime: node
     plan: free
     rootDir: backend
-    buildCommand: npm install && npm run build
+    # --include=dev forces devDependencies (@types/*, prisma, typescript) to be
+    # installed even though Render sets NODE_ENV=production during the build.
+    buildCommand: npm install --include=dev && npm run build
     startCommand: npm run start:prod
     healthCheckPath: /health
     envVars:
